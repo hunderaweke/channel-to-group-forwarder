@@ -48,10 +48,11 @@ class TelegramWebhook(BaseModel):
 
 @dp.message(CommandStart())
 async def handle_start(message: Message):
+    client = await connect_to_mongo()
     if message.chat.id < 0:
         group_id = message.chat.id
-        if not find_id(group_id):
-            insert_id(group_id)
+        if not await find_id(client, group_id):
+            await insert_id(client, group_id)
 
 
 async def get_message(message: Message, state: FSMContext):
@@ -62,8 +63,9 @@ async def get_message(message: Message, state: FSMContext):
 
 @dp.message(ForwardMessage.text)
 async def forward_message(message: Message, state: FSMContext):
+    client = await connect_to_mongo()
     await state.clear()
-    id_object = get_ids()
+    id_object = await get_ids(client)
     for object in id_object:
         await bot.forward_message(
             chat_id=object["group_id"],

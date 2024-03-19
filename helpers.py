@@ -1,27 +1,37 @@
-import urllib
-from pymongo import MongoClient
 from decouple import config
-
+from motor.motor_asyncio import AsyncIOMotorClient
+from urllib import parse
 
 DATABASE_USERNAME = config("DATABASE_USERNAME", cast=str, default=None)
 DATABASE_PASSWORD = config("DATABASE_PASSWORD", cast=str, default=None)
 DATABASE_SUFFIX = config("DATABASE_SUFFIX", cast=str, default=None)
 
-DATABASE_URL = f"mongodb+srv://{DATABASE_USERNAME}:{urllib.parse.quote(DATABASE_PASSWORD)}{DATABASE_SUFFIX}"
+# Quote the password
+quoted_password = parse.quote(DATABASE_PASSWORD)
 
-client = MongoClient(DATABASE_URL)
-
-db = client.message_forwarder
+DATABASE_URL = f"mongodb+srv://{DATABASE_USERNAME}:{quoted_password}{DATABASE_SUFFIX}"
 
 
-def insert_id(group_id):
-    db.group_ids.insert_one({"group_id": group_id})
+async def connect_to_mongo():
+    client = AsyncIOMotorClient(DATABASE_URL)
+    return client
+
+
+async def close_mongo_connection(client):
+    client.close()
+
+
+async def insert_id(client, group_id):
+    db = client.message_forwarder
+    await db.group_ids.insert_one({"group_id": group_id})
     return True
 
 
-def find_id(group_id):
-    return db.group_ids.distinct("group_id", {"group_id": group_id})
+async def find_id(client, group_id):
+    db = client.message_forwarder
+    return await db.group_ids.distinct("group_id", {"group_id": group_id})
 
 
-def get_ids() -> list[dict]:
-    return db.group_ids.find()
+async def get_ids(client) -> list[dict]:
+    db = client.message_forwarder
+    return [document async for document in db.group_ids.find()]
