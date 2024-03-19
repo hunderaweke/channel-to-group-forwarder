@@ -14,7 +14,7 @@ from aiogram.filters.command import Command, CommandStart
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.enums.parse_mode import ParseMode
-from helpers import *
+from api.helpers import *
 
 logging.basicConfig(level=logging.INFO)
 
