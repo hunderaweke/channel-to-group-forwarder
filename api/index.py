@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 
@@ -13,6 +14,7 @@ from aiogram.filters.command import Command, CommandStart
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.enums.parse_mode import ParseMode
+from helpers import *
 
 logging.basicConfig(level=logging.INFO)
 
@@ -22,7 +24,6 @@ CHANNEL_ID = config("CHANNEL_ID", cast=int)
 
 app = FastAPI()
 dp = Dispatcher()
-router = Router()
 bot = Bot(TOKEN)
 
 
@@ -48,17 +49,9 @@ class TelegramWebhook(BaseModel):
 @dp.message(CommandStart())
 async def handle_start(message: Message):
     if message.chat.id < 0:
-        chat_id = str(message.chat.id)
-        with open("groups.json", "r+") as file:
-            try:
-                data = json.load(file)
-            except:
-                data = {"chat_ids": []}
-            if chat_id not in data["chat_ids"]:
-                data["chat_ids"].append(chat_id)
-                file.seek(0)
-                json.dump(data, file, indent=4)
-                file.truncate()
+        group_id = message.chat.id
+        if not find_id(group_id):
+            insert_id(group_id)
 
 
 async def get_message(message: Message, state: FSMContext):
@@ -70,15 +63,13 @@ async def get_message(message: Message, state: FSMContext):
 @dp.message(ForwardMessage.text)
 async def forward_message(message: Message, state: FSMContext):
     await state.clear()
-    with open("groups.json", "r") as file:
-        data = json.load(file)
-        chat_ids = data["chat_ids"]
-        for line in chat_ids:
-            await bot.forward_message(
-                chat_id=int(line),
-                message_id=message.message_id,
-                from_chat_id=message.chat.id,
-            )
+    id_object = get_ids()
+    for object in id_object:
+        await bot.forward_message(
+            chat_id=object["group_id"],
+            from_chat_id=message.chat.id,
+            message_id=message.message_id,
+        )
 
 
 @dp.channel_post()
@@ -92,9 +83,6 @@ async def handle_channel_post(message: Message):
                 from_chat_id=message.chat.id,
                 message_id=message.message_id,
             )
-
-
-logging.info(dp.sub_routers)
 
 
 @app.post("/webhook")
@@ -113,7 +101,7 @@ def index():
 
 
 # async def main():
-#     dp.include_router(router)
+#     dp.message.register(get_message, Command("forward"))
 #     await dp.start_polling(bot)
 
 
