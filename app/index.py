@@ -9,13 +9,25 @@ from fastapi import FastAPI, HTTPException
 
 from aiogram import Dispatcher, Bot, Router
 from aiogram.types import Message, Update
+from aiogram.filters.command import Command, CommandStart
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
+from aiogram.enums.parse_mode import ParseMode
+
+logging.basicConfig(level=logging.INFO)
 
 TOKEN = config("BOT_TOKEN")
+ADMIN_USER = config("ADMIN", cast=int)
+CHANNEL_ID = config("CHANNEL_ID", cast=int)
+
 app = FastAPI()
 dp = Dispatcher()
 router = Router()
 bot = Bot(TOKEN)
-logging.basicConfig(level=logging.INFO)
+
+
+class ForwardMessage(StatesGroup):
+    text = State()
 
 
 class TelegramWebhook(BaseModel):
@@ -33,7 +45,7 @@ class TelegramWebhook(BaseModel):
     poll_answer: Optional[dict] = None
 
 
-@router.message()
+@dp.message(CommandStart())
 async def handle_start(message: Message):
     if message.chat.id < 0:
         chat_id = str(message.chat.id)
@@ -49,7 +61,27 @@ async def handle_start(message: Message):
                 file.truncate()
 
 
-@router.channel_post()
+async def get_message(message: Message, state: FSMContext):
+    if message.chat.id == ADMIN_USER:
+        await state.set_state(ForwardMessage.text)
+        await message.reply("Send the message to forward please")
+
+
+@dp.message(ForwardMessage.text)
+async def forward_message(message: Message, state: FSMContext):
+    await state.clear()
+    with open("groups.json", "r") as file:
+        data = json.load(file)
+        chat_ids = data["chat_ids"]
+        for line in chat_ids:
+            await bot.forward_message(
+                chat_id=int(line),
+                message_id=message.message_id,
+                from_chat_id=message.chat.id,
+            )
+
+
+@dp.channel_post()
 async def handle_channel_post(message: Message):
     with open("groups.json", "r") as file:
         data = json.load(file)
@@ -62,10 +94,13 @@ async def handle_channel_post(message: Message):
             )
 
 
+logging.info(dp.sub_routers)
+
+
 @app.post("/webhook")
 async def webhook(webhook_data: TelegramWebhook):
     try:
-        dp.include_router(router=router)
+        dp.message.register(get_message, Command("forward"))
         await dp._process_update(bot=bot, update=Update(**webhook_data.dict()))
         return {"message": "ok"}
     except HTTPException as e:
@@ -75,3 +110,13 @@ async def webhook(webhook_data: TelegramWebhook):
 @app.get("/")
 def index():
     return {"message": "Hello world"}
+
+
+# async def main():
+#     dp.include_router(router)
+#     await dp.start_polling(bot)
+
+
+# if __name__ == "__main__":
+#     logging.basicConfig(level=logging.INFO)
+#     asyncio.run(main())
