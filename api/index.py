@@ -91,26 +91,26 @@ async def handle_channel_post(message: Message):
             )
 
 
-@app.post("/webhook")
-async def webhook(webhook_data: TelegramWebhook):
-    try:
-        dp.message.register(get_message, Command("forward"))
-        await dp._process_update(bot=bot, update=Update(**webhook_data.dict()))
-        return {"message": "ok"}
-    except HTTPException as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# @app.post("/webhook")
+# async def webhook(webhook_data: TelegramWebhook):
+#     try:
+#         dp.message.register(get_message, Command("forward"))
+#         await dp._process_update(bot=bot, update=Update(**webhook_data.dict()))
+#         return {"message": "ok"}
+#     except HTTPException as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/")
-def index():
-    return {"message": "Hello world"}
+# @app.get("/")
+# def index():
+#     return {"message": "Hello world"}
 
 
-# async def main():
-#     dp.message.register(get_message, Command("forward"))
-#     await dp.start_polling(bot)
+async def main():
+    dp.message.register(get_message, Command("forward"))
+    await dp.start_polling(bot)
 
 
-# if __name__ == "__main__":
-#     logging.basicConfig(level=logging.INFO)
-#     asyncio.run(main())
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(main())
