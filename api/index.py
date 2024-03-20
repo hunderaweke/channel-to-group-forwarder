@@ -53,12 +53,17 @@ async def handle_start(message: Message):
         group_id = message.chat.id
         if not await find_id(client, group_id):
             await insert_id(client, group_id)
+            await message.reply("Successfully registered for the service")
+            await message.delete()
+    await close_mongo_connection(client=client)
 
 
 async def get_message(message: Message, state: FSMContext):
     if message.chat.id == ADMIN_USER:
         await state.set_state(ForwardMessage.text)
         await message.reply("Send the message to forward please")
+    else:
+        await message.reply("Command Allowed for Admin User Only")
 
 
 @dp.message(ForwardMessage.text)
@@ -72,6 +77,7 @@ async def forward_message(message: Message, state: FSMContext):
             from_chat_id=message.chat.id,
             message_id=message.message_id,
         )
+    await close_mongo_connection(client=client)
 
 
 @dp.channel_post()
