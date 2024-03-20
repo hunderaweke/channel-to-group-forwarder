@@ -13,7 +13,7 @@ DATABASE_URL = f"mongodb+srv://{DATABASE_USERNAME}:{quoted_password}{DATABASE_SU
 
 
 async def connect_to_mongo():
-    client = AsyncIOMotorClient(DATABASE_URL)
+    client = await AsyncIOMotorClient(DATABASE_URL)
     return client
 
 

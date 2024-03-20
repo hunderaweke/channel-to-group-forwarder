@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 
@@ -54,7 +53,6 @@ async def handle_start(message: Message):
         if not await find_id(client, group_id):
             await insert_id(client, group_id)
             await message.reply("Successfully registered for the service")
-            await message.delete()
     await close_mongo_connection(client=client)
 
 
