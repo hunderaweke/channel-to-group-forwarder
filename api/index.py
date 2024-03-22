@@ -1,5 +1,6 @@
 import json
 import logging
+import asyncio
 
 from decouple import config
 from typing import Optional
@@ -70,10 +71,11 @@ async def forward_message(message: Message, state: FSMContext):
     await state.clear()
     id_object = await get_ids(client)
     for object in id_object:
-        await bot.forward_message(
+        await bot.copy_message(
             chat_id=object["group_id"],
             from_chat_id=message.chat.id,
             message_id=message.message_id,
+            disable_notification=True,
         )
     await close_mongo_connection(client=client)
 
@@ -89,22 +91,6 @@ async def handle_channel_post(message: Message):
                 from_chat_id=message.chat.id,
                 message_id=message.message_id,
             )
-
-
-# @app.post("/webhook")
-# async def webhook(webhook_data: TelegramWebhook):
-#     try:
-#         dp.message.register(get_message, Command("forward"))
-#         await dp._process_update(bot=bot, update=Update(**webhook_data.dict()))
-#         return {"message": "ok"}
-#     except HTTPException as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
-
-# @app.get("/")
-# def index():
-#     return {"message": "Hello world"}
-
 
 async def main():
     dp.message.register(get_message, Command("forward"))
