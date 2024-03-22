@@ -1,7 +1,6 @@
 from decouple import config
 from motor.motor_asyncio import AsyncIOMotorClient
 from urllib import parse
-from typing import List
 
 
 DATABASE_USERNAME = config("DATABASE_USERNAME", cast=str, default=None)
@@ -34,6 +33,6 @@ async def find_id(client, group_id):
     return await db.group_ids.distinct("group_id", {"group_id": group_id})
 
 
-async def get_ids(client) -> List[dict]:
+async def get_ids(client):
     db = client.message_forwarder
     return [document async for document in db.group_ids.find()]
