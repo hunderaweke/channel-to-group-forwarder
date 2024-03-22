@@ -19,7 +19,7 @@ from helpers import *
 logging.basicConfig(level=logging.INFO)
 
 TOKEN = config("BOT_TOKEN")
-ADMIN_USER = config("ADMIN", cast=int)
+ADMIN_USERS = set([int(s) for s in (config("ADMINS", cast=str)).split(",")])
 CHANNEL_ID = config("CHANNEL_ID", cast=int)
 
 app = FastAPI()
@@ -58,7 +58,7 @@ async def handle_start(message: Message):
 
 
 async def get_message(message: Message, state: FSMContext):
-    if message.chat.id == ADMIN_USER:
+    if message.chat.id in ADMIN_USERS:
         await state.set_state(ForwardMessage.text)
         await message.reply("Send the message to forward please")
     else:
@@ -91,6 +91,7 @@ async def handle_channel_post(message: Message):
                 from_chat_id=message.chat.id,
                 message_id=message.message_id,
             )
+
 
 async def main():
     dp.message.register(get_message, Command("forward"))
