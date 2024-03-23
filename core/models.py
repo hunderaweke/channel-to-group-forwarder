@@ -1,9 +1,11 @@
 import json
-
 from datetime import datetime
+from typing import Self
+
+from core.db import Database
 
 
-class BaseMode:
+class BaseModel:
     class Meta:
         pass
 
@@ -48,5 +50,108 @@ class BaseMode:
     @classmethod
     def from_json(cls, data):
         return cls.from_dict(json.loads(data))
-    
-    
+
+
+class DatabaseModel(BaseModel):
+    db = Database()
+
+    def __new__(cls) -> Self:
+        if not hasattr(cls, "collection"):
+            cls.collection = cls.db.get_collection(cls.meta.collection_name)
+        return super().__new__(cls)
+
+    async def save(self):
+        data = {
+            key: value for key, value in self.to_dict().items() if key in self.kwargs
+        }
+        pk = data.pop(self.pk_field, None)
+        defaults = {
+            key: value
+            for key, value in self.to_dict().items()
+            if key not in self.kwargs and key != "_id"
+        }
+        if pk:
+            await self.collection.update_one(
+                {self.pk_field: pk},
+                {
+                    "$set": data,
+                    "$currentDate": {
+                        "lastModified": True,
+                    },
+                    "$setOnInsert": {
+                        **defaults,
+                        "created": datetime.utcnow(),
+                    },
+                },
+                upsert=True,
+            )
+        else:
+            result = await self.collection.insert_one(
+                {
+                    **data,
+                    **defaults,
+                    "created": datetime.utcnow(),
+                }
+            )
+            setattr(self, self.pk_field, result.inserted_id)
+        return self.get()
+
+    async def get(self):
+        data = await self.collection.find_one({self.pk_field, self.pk})
+        if data:
+            return self.from_dict(data)
+
+    @classmethod
+    async def all(cls):
+        if not hasattr(cls, "collection"):
+            cls.collection = cls.db.get_collection(cls.meta.collection_name)
+        data = cls.collection.find({})
+        return [cls.from_dict(d) async for d in data]
+
+    @classmethod
+    async def count(cls):
+        if not hasattr(cls, "collection"):
+            cls.collection = cls.db.get_collection(cls.meta.collection_name)
+        return cls.collection.count_documents({})
+
+    @classmethod
+    async def filter(cls, **kwargs):
+        """
+        Get all models from the database that match the filter.
+        """
+        if not hasattr(cls, "collection"):
+            cls.collection = cls.db.get_collection(cls.meta.collection_name)
+
+        data = cls.collection.find(kwargs)
+
+        return [cls.from_dict(d) async for d in data]
+
+    async def get_or_create(self, **kwargs):
+        """
+        Get the model from the database or create a new one.
+        """
+
+        document = await self.get()
+        if document:
+            return document
+        else:
+            return await self.save()
+
+    @property
+    def pk(self):
+        """
+        Get the primary key of the model.
+        """
+        return getattr(self, self.pk_field, None)
+
+    @property
+    def pk_field(self):
+        """
+        Get the primary key field of the model.
+        """
+        return self.meta.pk_field
+
+    class Meta(BaseModel.Meta):
+        pk_field = "_id"
+        collection_name = None
+        fields = []
