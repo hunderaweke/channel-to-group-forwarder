@@ -6,14 +6,13 @@ from decouple import config
 from typing import Optional
 from pydantic import BaseModel
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 
-from aiogram import Dispatcher, Bot, Router
-from aiogram.types import Message, Update
+from aiogram import Dispatcher, Bot
+from aiogram.types import Message
 from aiogram.filters.command import Command, CommandStart
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-from aiogram.enums.parse_mode import ParseMode
 from helpers import *
 
 logging.basicConfig(level=logging.INFO)
