@@ -3,7 +3,7 @@ from core.config import logger
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters.command import CommandStart, Command
-
+from aiogram.enums import ChatType
 
 from models.groups import Group
 
@@ -13,7 +13,7 @@ register_router = Router()
 @register_router.message(CommandStart())
 async def handle_start(message: Message):
     logger.info(f"Handling /start Command in {message.chat.id}")
-    if message.chat.id < 0:
+    if ChatType.GROUP:
         new_group = Group.from_dict(
             {
                 "is_active": True,
@@ -33,7 +33,7 @@ async def handle_start(message: Message):
 @register_router.message(Command("stop"))
 async def remove_group(message: Message):
     logger.info(f"Handling /stop command in {message.chat.id}")
-    if message.chat.id < 0:
+    if ChatType.GROUP:
         group = Group.from_dict(
             {
                 "is_active": True,
