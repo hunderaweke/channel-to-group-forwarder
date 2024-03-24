@@ -1,8 +1,9 @@
 from typing import Self
 
-from core import config
 from loguru import logger
 from motor.motor_asyncio import AsyncIOMotorClient
+
+from core import config
 
 
 class SingleTon:

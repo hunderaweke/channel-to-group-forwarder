@@ -1,18 +1,16 @@
 import asyncio
-
-from decouple import config
 from typing import Optional
-from pydantic import BaseModel
 
+from aiogram import Bot, Dispatcher
+from decouple import config
 from fastapi import FastAPI
-
-from aiogram import Dispatcher, Bot
+from pydantic import BaseModel
 
 from core import config
 from core.config import logger
-from routers.register_router import register_router
-from routers.forward_router import forward_router
 from routers.admin.groups_router import groups_router
+from routers.forward_router import forward_router
+from routers.register_router import register_router
 
 TOKEN = config.BOT_TOKEN
 

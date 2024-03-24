@@ -2,8 +2,8 @@ import json
 from datetime import datetime
 from typing import Self
 
-from core.db import Database
 from core.config import logger
+from core.db import Database
 
 
 class BaseModel:

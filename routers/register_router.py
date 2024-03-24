@@ -1,10 +1,9 @@
-from core.config import logger
-
 from aiogram import Router
-from aiogram.types import Message
-from aiogram.filters.command import CommandStart, Command
 from aiogram.enums import ChatType
+from aiogram.filters.command import Command, CommandStart
+from aiogram.types import Message
 
+from core.config import logger
 from models.groups import Group
 
 register_router = Router()
