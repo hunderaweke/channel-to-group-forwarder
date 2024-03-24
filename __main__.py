@@ -1,7 +1,6 @@
-import json
-import logging
 import asyncio
 
+from loguru import logger
 from decouple import config
 from typing import Optional
 from pydantic import BaseModel
@@ -10,16 +9,17 @@ from fastapi import FastAPI
 
 from aiogram import Dispatcher, Bot
 from aiogram.types import Message
-from aiogram.filters.command import Command, CommandStart
+from aiogram.filters.command import Command
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
+
+
 from helpers import *
+from core import config
+from routers.register_router import register_router
 
-logging.basicConfig(level=logging.INFO)
-
-TOKEN = config("BOT_TOKEN")
-ADMIN_USERS = set([int(s) for s in (config("ADMINS", cast=str)).split(",")])
-CHANNEL_ID = config("CHANNEL_ID", cast=int)
+TOKEN = config.BOT_TOKEN
+ADMIN_USERS = config.SUPER_USERS
 
 app = FastAPI()
 dp = Dispatcher()
@@ -45,17 +45,6 @@ class TelegramWebhook(BaseModel):
     poll_answer: Optional[dict] = None
 
 
-@dp.message(CommandStart())
-async def handle_start(message: Message):
-    client = await connect_to_mongo()
-    if message.chat.id < 0:
-        group_id = message.chat.id
-        if not await find_id(client, group_id):
-            await insert_id(client, group_id)
-            await message.reply("Successfully registered for the service")
-    await close_mongo_connection(client=client)
-
-
 async def get_message(message: Message, state: FSMContext):
     if message.chat.id in ADMIN_USERS:
         await state.set_state(ForwardMessage.text)
@@ -79,24 +68,13 @@ async def forward_message(message: Message, state: FSMContext):
     await close_mongo_connection(client=client)
 
 
-@dp.channel_post()
-async def handle_channel_post(message: Message):
-    with open("groups.json", "r") as file:
-        data = json.load(file)
-        chat_ids = data["chat_ids"]
-        for line in chat_ids:
-            await bot.forward_message(
-                chat_id=int(line),
-                from_chat_id=message.chat.id,
-                message_id=message.message_id,
-            )
-
-
 async def main():
+    logger.info("Registering Handlers")
     dp.message.register(get_message, Command("forward"))
+    dp.include_router(register_router)
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logger.info("Started Polling")
     asyncio.run(main())
