@@ -1,5 +1,3 @@
-from typing import Self
-
 from loguru import logger
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -7,7 +5,7 @@ from core import config
 
 
 class SingleTon:
-    def __new__(cls, *args, **kwargs) -> Self:
+    def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "instance"):
             cls.instance = super().__new__(cls, *args, **kwargs)
         return cls.instance
