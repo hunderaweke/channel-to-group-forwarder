@@ -1,6 +1,6 @@
 from typing import Self
 
-import config
+from core import config
 from loguru import logger
 from motor.motor_asyncio import AsyncIOMotorClient
 

@@ -16,6 +16,7 @@ DATABASE_NAME = config("DATABASE_NAME")
 
 LOGGER_FILE_NAME = config("LOGGER_FILE_NAME", default="bot.log")
 
+
 # Debugger log file
 
 logger.add(
@@ -30,13 +31,15 @@ logger.add(
 
 logger.add(
     NotificationHandler(
-        provider=Telegram(
-            chat_id=config("NOTIFICATION_RECIEPENT_ID"),
-            token=config("NOTIFIER_TOKEN"),
-        ),
+        "telegram",
+        defaults={
+            "chat_id": config("NOTIFICATION_RECIEPENT_ID"),
+            "token": config("NOTIFIER_TOKEN"),
+        },
     ),
     level="ERROR",
 )
+
 
 # Admins for the bot
 

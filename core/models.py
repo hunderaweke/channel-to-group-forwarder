@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Self
 
 from core.db import Database
+from core.config import logger
 
 
 class BaseModel:
@@ -55,7 +56,7 @@ class BaseModel:
 class DatabaseModel(BaseModel):
     db = Database()
 
-    def __new__(cls) -> Self:
+    def __new__(cls, *args, **kwargs) -> Self:
         if not hasattr(cls, "collection"):
             cls.collection = cls.db.get_collection(cls.meta.collection_name)
         return super().__new__(cls)
@@ -70,6 +71,7 @@ class DatabaseModel(BaseModel):
             for key, value in self.to_dict().items()
             if key not in self.kwargs and key != "_id"
         }
+        await self.collection.create_index(self.pk_field, unique=True)
         if pk:
             await self.collection.update_one(
                 {self.pk_field: pk},
@@ -94,10 +96,13 @@ class DatabaseModel(BaseModel):
                 }
             )
             setattr(self, self.pk_field, result.inserted_id)
-        return self.get()
+        return await self.get()
+
+    async def delete(self):
+        return self.collection.delete_one({self.pk_field: self.pk})
 
     async def get(self):
-        data = await self.collection.find_one({self.pk_field, self.pk})
+        data = await self.collection.find_one({self.pk_field: self.pk})
         if data:
             return self.from_dict(data)
 
