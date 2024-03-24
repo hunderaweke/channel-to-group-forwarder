@@ -117,7 +117,7 @@ class DatabaseModel(BaseModel):
     async def count(cls):
         if not hasattr(cls, "collection"):
             cls.collection = cls.db.get_collection(cls.meta.collection_name)
-        return cls.collection.count_documents({})
+        return await cls.collection.count_documents({})
 
     @classmethod
     async def filter(cls, **kwargs):

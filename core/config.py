@@ -43,4 +43,9 @@ logger.add(
 
 # Admins for the bot
 
-SUPER_USERS = config("SUPER_USERS", cast=Csv())
+ADMIN_USERS = set([int(s) for s in config("ADMIN_USERS", cast=Csv())])
+
+
+# Super User of the Bot
+
+SUPER_USER = set([int(s) for s in config("SUPER_USER", cast=Csv())])
