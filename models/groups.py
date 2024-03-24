@@ -4,15 +4,11 @@ from core.models import DatabaseModel
 class Group(DatabaseModel):
     is_active = True
 
-    class Meta:
+    class Meta(DatabaseModel.Meta):
         collection_name = "groups"
         model_name = "group"
-        pk_field = "id"
+        pk_field = "chat_id"
         fields = [
-            "id",
-            "first_name",
-            "last_name",
-            "username",
             "is_active",
-            "created",
+            "chat_id",
         ]
