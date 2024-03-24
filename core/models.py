@@ -1,6 +1,5 @@
 import json
 from datetime import datetime
-from typing import Self
 
 from core.config import logger
 from core.db import Database
@@ -56,7 +55,7 @@ class BaseModel:
 class DatabaseModel(BaseModel):
     db = Database()
 
-    def __new__(cls, *args, **kwargs) -> Self:
+    def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "collection"):
             cls.collection = cls.db.get_collection(cls.meta.collection_name)
         return super().__new__(cls)
