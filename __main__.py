@@ -1,6 +1,5 @@
 import asyncio
 
-from loguru import logger
 from decouple import config
 from typing import Optional
 from pydantic import BaseModel
@@ -8,26 +7,18 @@ from pydantic import BaseModel
 from fastapi import FastAPI
 
 from aiogram import Dispatcher, Bot
-from aiogram.types import Message
-from aiogram.filters.command import Command
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.context import FSMContext
 
-
-from helpers import *
 from core import config
+from core.config import logger
 from routers.register_router import register_router
+from routers.forward_router import forward_router
+from routers.admin.groups_router import groups_router
 
 TOKEN = config.BOT_TOKEN
-ADMIN_USERS = config.SUPER_USERS
 
 app = FastAPI()
 dp = Dispatcher()
 bot = Bot(TOKEN)
-
-
-class ForwardMessage(StatesGroup):
-    text = State()
 
 
 class TelegramWebhook(BaseModel):
@@ -45,36 +36,18 @@ class TelegramWebhook(BaseModel):
     poll_answer: Optional[dict] = None
 
 
-async def get_message(message: Message, state: FSMContext):
-    if message.chat.id in ADMIN_USERS:
-        await state.set_state(ForwardMessage.text)
-        await message.reply("Send the message to forward please")
-    else:
-        await message.reply("Command Allowed for Admin User Only")
-
-
-@dp.message(ForwardMessage.text)
-async def forward_message(message: Message, state: FSMContext):
-    client = await connect_to_mongo()
-    await state.clear()
-    id_object = await get_ids(client)
-    for object in id_object:
-        await bot.copy_message(
-            chat_id=object["group_id"],
-            from_chat_id=message.chat.id,
-            message_id=message.message_id,
-            disable_notification=True,
-        )
-    await close_mongo_connection(client=client)
-
-
 async def main():
     logger.info("Registering Handlers")
-    dp.message.register(get_message, Command("forward"))
     dp.include_router(register_router)
+    dp.include_router(forward_router)
+    dp.include_router(groups_router)
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    logger.info("Started Polling")
-    asyncio.run(main())
+    try:
+        logger.info("Started Polling")
+        asyncio.run(main())
+        logger.info("Stopped Polling")
+    except Exception as e:
+        logger.error(e)
