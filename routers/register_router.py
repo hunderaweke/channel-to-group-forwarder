@@ -12,7 +12,7 @@ register_router = Router()
 @register_router.message(CommandStart())
 async def handle_start(message: Message):
     logger.info(f"Handling /start Command in {message.chat.id}")
-    if ChatType.GROUP:
+    if message.chat.type == ChatType.GROUP:
         new_group = Group.from_dict(
             {
                 "is_active": True,
