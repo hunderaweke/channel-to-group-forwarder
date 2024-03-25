@@ -10,6 +10,7 @@ from core.config import logger
 from models.groups import Group
 
 ADMIN_USERS = set(config.ADMIN_USERS)
+logger.info(ADMIN_USERS)
 
 forward_router = Router()
 
@@ -20,7 +21,7 @@ class ForwardMessage(StatesGroup):
 
 @forward_router.message(Command("forward"))
 async def get_message(message: Message, state: FSMContext):
-    if message.chat.type == ChatType.GROUP:
+    if message.chat.id < 0:
         await message.reply("This Method is not allowed in Groups")
     elif message.chat.id in ADMIN_USERS:
         await state.set_state(ForwardMessage.text)
