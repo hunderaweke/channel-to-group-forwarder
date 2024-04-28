@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, logging
 from typing import Optional
 
 from aiogram import Bot, Dispatcher
@@ -35,6 +35,7 @@ class TelegramWebhook(BaseModel):
 
 
 async def main():
+    logging.basicConfig(level=logging.DEBUG)
     logger.info("Registering Handlers")
     dp.include_router(register_router)
     dp.include_router(forward_router)

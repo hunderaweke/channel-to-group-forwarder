@@ -2,8 +2,10 @@ from aiogram import Router
 from aiogram.enums import ChatType
 from aiogram.filters.command import Command, CommandStart
 from aiogram.types import Message
+from aiogram.types.reply_keyboard_markup import ReplyKeyboardMarkup
+from aiogram.types.keyboard_button import KeyboardButton
 
-from core.config import logger
+from core.config import logger, ADMIN_USERS
 from models.groups import Group
 
 register_router = Router()
@@ -27,7 +29,19 @@ async def handle_start(message: Message):
         await new_group.save()
         await message.reply("Successfully Registered")
     else:
-        await message.reply("This Bot doesn't support User Accounts.")
+        if message.chat.id in ADMIN_USERS:
+            buttons = [
+                [
+                    KeyboardButton(text="👥 Groups"),
+                    KeyboardButton(text="➡️ Forward Message"),
+                ],
+            ]
+            markup = ReplyKeyboardMarkup(
+                keyboard=buttons, is_persistent=True, resize_keyboard=True
+            )
+            await message.reply(text="Welcome", reply_markup=markup)
+        else:
+            await message.reply("Sorry. 😔 This Bot doesn't support User Accounts.")
 
 
 @register_router.message(Command("stop"))
