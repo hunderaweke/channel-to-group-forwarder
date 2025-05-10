@@ -31,7 +31,7 @@ if config.get("DATABASE_USE_SRV", default="false").lower() == "true":
 else:
     DATABASE_URL_SCHEME = "mongodb"
 
-DATABASE_URL = f"{DATABASE_URL_SCHEME}://{urllib.parse.quote_plus(DATABASE_USERNAME)}:{urllib.parse.quote_plus(DATABASE_PASSWORD)}{DATABASE_SUFFIX}"
+DATABASE_URL = f"{DATABASE_URL_SCHEME}://{urllib.parse.quote_plus(DATABASE_USERNAME)}:{urllib.parse.quote_plus(DATABASE_PASSWORD)}@{DATABASE_SUFFIX}"
 # Debugger log file
 
 logger.add(
